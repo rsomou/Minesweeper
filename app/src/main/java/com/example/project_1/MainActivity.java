@@ -1,11 +1,13 @@
 package com.example.project_1;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -41,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Integer> flags;
     Integer flag_cnt;
     Boolean win = false;
+    Boolean lose = false;
+    Integer seconds = 0;
 
     // save the TextViews of all cells in an array, so later on,
     // when a TextView is clicked, we know which cell it is
@@ -51,7 +55,13 @@ public class MainActivity extends AppCompatActivity {
         float density = Resources.getSystem().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
-
+    private int findIndexOfCellTextView(TextView tv) {
+        for (int n=0; n<cell_tvs.size(); n++) {
+            if (cell_tvs.get(n) == tv)
+                return n;
+        }
+        return -1;
+    }
     private void initialize_game_state() {
         game_state = new ArrayList<Integer>();
         // Fill the game_state with zeroes
@@ -120,6 +130,20 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void run_timer(){
+        TextView timer = findViewById(R.id.timer);
+        Handler handler = new Handler();
+        handler.post(new Runnable(){
+           @Override
+           public void run (){
+               timer.setText(String.valueOf(seconds));
+               seconds++;
+               handler.postDelayed(this,1000);
+           }
+        });
+
+    }
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,21 +153,15 @@ public class MainActivity extends AppCompatActivity {
         Button myButton = findViewById(R.id.ModeButton);
         myButton.setOnClickListener(this::onClick_ModeSwitch);
 
-
+        win = false;
+        lose = false;
+        flag_state = false;
+        flag_cnt = 4;
+        flags = new ArrayList<>(Arrays.asList(-1, -1, -1, -1));
         cell_tvs = new ArrayList<TextView>();
 
-
-        flags = new ArrayList<Integer>();
-
-        //4 flags
-        flags.add(-1);
-        flags.add(-1);
-        flags.add(-1);
-        flags.add(-1);
-
-        flag_cnt = 4;
-
         initialize_game_state();
+        run_timer();
 
         GridLayout grid = (GridLayout) findViewById(R.id.gridLayout01);
         for (int i = 0; i<ROW_COUNT; i++) {
@@ -179,30 +197,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private int findIndexOfCellTextView(TextView tv) {
-        for (int n=0; n<cell_tvs.size(); n++) {
-            if (cell_tvs.get(n) == tv)
-                return n;
-        }
-        return -1;
-    }
-
-
-
     public void onClickTV(View view){
-        if(win){
-            //transition to different page for win
-            System.out.println("WIN");
+        if(win || lose){
+            Intent intent = new Intent(MainActivity.this, EndActivity.class);
+            intent.putExtra("isWin", win);
+            intent.putExtra("Time",seconds);
+            startActivity(intent);
+            finish();
+            return;
         }
 
-        //check win condition
-        win = true;
-        for(int flag:flags){
-            if(flag == -1 || game_state.get(flag)!=-1){
-                win = false;
-                break;
-            }
-        }
 
 
         //check mode ur in (flag v pick)
@@ -247,6 +251,14 @@ public class MainActivity extends AppCompatActivity {
                     flag_c_d.setText(String.valueOf(flag_cnt));
                 }
             }
+
+            win = true;
+            for(int flag:flags){
+                if(flag == -1 || game_state.get(flag)!=-1){
+                    win = false;
+                    break;
+                }
+            }
             return;
         }
 
@@ -262,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
                 tv.setBackgroundColor(Color.LTGRAY);
             }
 
-            //some intent transistion to new page (lose)
+            lose = true;
 
         } else {
             if(game_state.get(n) == 0){
@@ -280,7 +292,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
-
 
     }
 }
