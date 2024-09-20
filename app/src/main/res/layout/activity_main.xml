@@ -19,6 +19,31 @@
         app:layout_constraintStart_toStartOf="@+id/gridLayout01" />
 
     <TextView
+        android:id="@+id/clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="@string/clock"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/gridLayout01"
+        app:layout_constraintEnd_toEndOf="@+id/gridLayout01"
+        app:layout_constraintHorizontal_bias="0.692"
+        app:layout_constraintStart_toStartOf="@+id/gridLayout01" />
+
+
+    <TextView
+        android:id="@+id/timer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="0"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/gridLayout01"
+        app:layout_constraintEnd_toEndOf="@+id/gridLayout01"
+        app:layout_constraintHorizontal_bias="0.876"
+        app:layout_constraintStart_toStartOf="@+id/gridLayout01" />
+
+    <TextView
         android:id="@+id/flagCountTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
