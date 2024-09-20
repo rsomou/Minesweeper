@@ -1,19 +1,16 @@
 package com.example.project_1;
 
+import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.gridlayout.widget.GridLayout;
 
 import java.util.ArrayList;
@@ -28,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int COLUMN_COUNT = 10;
     private static final int ROW_COUNT = 12;
 
-    private ArrayList<int[]> directions = new ArrayList<>(Arrays.asList(
+    final ArrayList<int[]> directions = new ArrayList<>(Arrays.asList(
             new int[]{-1, -1},  // top-left
             new int[]{-1, 0},   // top
             new int[]{-1, 1},   // top-right
@@ -39,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
             new int[]{1, 1}     // bottom-right
     ));
 
+    Boolean flag_state = false;
+
+    ArrayList<Integer> flags;
+    Integer flag_cnt;
+    Boolean win = false;
 
     // save the TextViews of all cells in an array, so later on,
     // when a TextView is clicked, we know which cell it is
@@ -93,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         while(!q.isEmpty()){
+            //noinspection DataFlowIssue
             int state = q.poll();
 
             int r = state/COLUMN_COUNT;
@@ -117,12 +120,28 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Button myButton = findViewById(R.id.ModeButton);
+        myButton.setOnClickListener(this::onClick_ModeSwitch);
+
+
         cell_tvs = new ArrayList<TextView>();
+
+
+        flags = new ArrayList<Integer>();
+
+        //4 flags
+        flags.add(-1);
+        flags.add(-1);
+        flags.add(-1);
+        flags.add(-1);
+
+        flag_cnt = 4;
 
         initialize_game_state();
 
@@ -149,6 +168,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void onClick_ModeSwitch(View view) {
+        flag_state = !flag_state;
+        Button btn = (Button) view;
+        if(flag_state){
+            btn.setText(R.string.flag);
+        } else {
+            btn.setText(R.string.pick);
+        }
+    }
 
 
     private int findIndexOfCellTextView(TextView tv) {
@@ -159,19 +187,83 @@ public class MainActivity extends AppCompatActivity {
         return -1;
     }
 
+
+
     public void onClickTV(View view){
+        if(win){
+            //transition to different page for win
+            System.out.println("WIN");
+        }
+
+        //check win condition
+        win = true;
+        for(int flag:flags){
+            if(flag == -1 || game_state.get(flag)!=-1){
+                win = false;
+                break;
+            }
+        }
+
+
+        //check mode ur in (flag v pick)
+
         TextView tv = (TextView) view;
         int n = findIndexOfCellTextView(tv);
+
+        TextView flag_c_d = findViewById(R.id.flagCountTextView);
+
+        //flag mode
+        if(flag_state){
+            boolean exists = false;
+            int idx=0;
+            int unocc_idx = 0;
+
+            for (int i=0;i<flags.size();i++) {
+                if(flags.get(i) == -1){
+                    unocc_idx=i;
+                }
+                if (flags.get(i) == n) {
+                    exists = true;
+                    idx = i;
+                    break;
+                }
+            }
+
+            if(exists){
+                tv.setText("");
+                flags.set(idx,-1);
+                flag_cnt++;
+                flag_c_d.setText(String.valueOf(flag_cnt));
+                return;
+            }
+
+            if(flag_cnt>0){
+
+                Drawable background = tv.getBackground();
+                if (((ColorDrawable) background).getColor() == Color.GREEN) {
+                    flags.set(unocc_idx, n);
+                    tv.setText(R.string.flag);
+                    flag_cnt--;
+                    flag_c_d.setText(String.valueOf(flag_cnt));
+                }
+            }
+            return;
+        }
+
+
+        //pick mode
+
+
         if(game_state.get(n) == -1){
             tv.setText(getString(R.string.mine));
 
             Drawable background = tv.getBackground();
-            if (background instanceof ColorDrawable &&
-                    ((ColorDrawable) background).getColor() == Color.GREEN) {
+            if (((ColorDrawable) background).getColor() == Color.GREEN) {
                 tv.setBackgroundColor(Color.LTGRAY);
             }
 
-            //some intent transistion to new pag (lose)
+            //some intent transistion to new page (lose)
+
         } else {
             if(game_state.get(n) == 0){
                 bfs(n);
